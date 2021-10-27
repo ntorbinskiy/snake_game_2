@@ -1,13 +1,16 @@
+// const { doc } = require("prettier");
+
 //variables
 let canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
-
+const btnTp = document.getElementById("tp");
+const btncc = document.getElementById("cc");
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
 canvas.width = CANVAS_WIDTH;
 canvas.height = CANVAS_HEIGHT;
-
+console.log(btnTp);
 let currentState = {
 	gridWidth: 20,
 	gridHeight: 20,
@@ -28,9 +31,13 @@ let currentState = {
 		{ x: 3, y: 5 },
 	],
 	gameOver: false,
-	cherry: [{ x: 5, y: 10 }, { x: 5, y: 16 }]
+	cherry: { x1: 5, y1: 10 },
+	teleportSnake: false
 };
-
+// const tptrue = btnTp.addEventListener("click", () => {
+// 	return true;
+// })
+// console.log(tptrue);
 const UP = "UP",
 	DOWN = "DOWN",
 	LEFT = "LEFT",
@@ -52,7 +59,6 @@ function drawSnakeHead(context, x, y, r) {
 	context.fill();
 	context.stroke();
 }
-
 function drawSnakeBody(context, x, y, r) {
 	context.beginPath();
 	context.arc(x, y, r, 0, Math.PI * 2);
@@ -69,7 +75,27 @@ function drawCherry(context, x, y, r) {
 	context.fill();
 	context.stroke();
 }
+function calcHeadPos(direction, x, y) {
+	if (direction === UP) {
+		return { x, y: y - 1 };
+	}
 
+	if (direction === DOWN) {
+		return { x, y: y + 1 };
+
+	}
+
+	if (direction === LEFT) {
+		return { x: x - 1, y };
+
+	}
+
+	if (direction === RIGHT) {
+		return { x: x + 1, y };
+
+	}
+	throw new Error("Unexpected direction value: " + direction);
+}
 function reduceState(state, event) {
 	console.log("reduce", event, state);
 	if (state.gameOver === true) {
@@ -80,31 +106,18 @@ function reduceState(state, event) {
 		return { ...state, direction: event };
 	}
 
-	if (event === TIMER_TICK) {
-
+	if (event === TIMER_TICK && state.direction !== undefined) {
 		const [{ x, y }] = state.snakeBody;
-		const rest = state.snakeBody.slice(0, state.snakeBody.length - 1);
-
-		if (state.direction === UP) {
-			const snakeBody = [{ x, y: y - 1 }, ...rest];
-			return { ...state, snakeBody };
+		const { x1, y1 } = state.cherry;
+		console.log("cherry", { state, x, y, x1, y1 });
+		let rest = state.snakeBody.slice(0, state.snakeBody.length - 1);
+		const head = calcHeadPos(state.direction, x, y);
+		if (head.x === x1 && head.y === y1) {
+			rest = state.snakeBody;
 		}
 
-		if (state.direction === DOWN) {
-			const snakeBody = [{ x, y: y + 1 }, ...rest];
-			return { ...state, snakeBody };
-		}
-
-		if (state.direction === LEFT) {
-			const snakeBody = [{ x: x - 1, y }, ...rest];
-			return { ...state, snakeBody };
-		}
-
-		if (state.direction === RIGHT) {
-			const snakeBody = [{ x: x + 1, y }, ...rest];
-
-			return { ...state, snakeBody };
-		}
+		const snakeBody = [head, ...rest];
+		return { ...state, snakeBody };
 	}
 
 	return state;
@@ -130,6 +143,7 @@ function gameOverCheck(state) {
 	}
 	return state;
 }
+
 // function validateSnakeHeadX(gridWidth, x) {
 // 	if (x < 0) {
 // 		return gridWidth - 1;
@@ -148,24 +162,34 @@ function gameOverCheck(state) {
 // 	}
 // 	return y;
 // }
-// function snakeTeleport(state) {
-// 	const [{ x, y }, ...rest] = state.snakeBody;
-// const newx = x < 0 ? state.gridWidth - 1 : (x >= state.gridWidth ? 0 : x);
-// const newy = y < 0 ? state.gridHeight - 1 : (y >= state.gridHeight ? 0 : y);
-// 	const newx = validateSnakeHeadX(state.gridWidth, x);
-// 	const newy = validateSnakeHeadY(state.gridHeight, y);
-// 	if (newx === x && newy === y) {
-// 		return state;
-// 	}
-// 	return { ...state, snakeBody: [{ x: newx, y: newy }, ...rest] };
-// }
+// const newx = validateSnakeHeadX(state.gridWidth, x);
+// const newy = validateSnakeHeadY(state.gridHeight, y);
+function snakeTeleport(state) {
+	const [{ x, y }, ...rest] = state.snakeBody;
+	const newx = x < 0 ? state.gridWidth - 1 : (x >= state.gridWidth ? 0 : x);
+	const newy = y < 0 ? state.gridHeight - 1 : (y >= state.gridHeight ? 0 : y);
+	if (newx === x && newy === y) {
+		return state;
+	}
+	return { ...state, snakeBody: [{ x: newx, y: newy }, ...rest] };
+}
 function cherryPick(state) {
 	const [{ x, y }] = state.snakeBody;
-	for (let i = 0; i < state.cherry.length; i++) {
-		if (x === state.cherry[i].x && y === state.cherry[i].y) {
-			const newCherry = state.cherry.splice(i, 1);
-			return { ...state, newCherry }
+	const body = state.snakeBody;
+	let cherry = state.cherry;
+	if (x === state.cherry.x1 && y === state.cherry.y1) {
+		let x1 = Math.floor(Math.random() * (state.gridWidth));
+		let y1 = Math.floor(Math.random() * (state.gridHeight));
+		for (let i = 0; i < body.length; i++) {
+			if (x1 === body[i].x && y1 === body[i].y) {
+				x1 = Math.floor(Math.random() * (state.gridWidth));
+				y1 = Math.floor(Math.random() * (state.gridHeight));
+			}
 		}
+		console.log(x1);
+		console.log(y1);
+		cherry = { x1, y1 };
+		return { ...state, cherry }
 	}
 
 	return state;
@@ -212,17 +236,16 @@ function paintState(context, state) {
 			Math.min(cellW / 2, cellH / 2)
 		);
 	}
-	for (let i = 0; i < state.cherry.length; i++) {
-		drawCherry(ctx,
-			(state.cherry[i].x + 0.5) * cellW,
-			(state.cherry[i].y + 0.5) * cellH,
-			Math.min(cellW / 2, cellH / 2)
-		);
-	}
+
+	drawCherry(ctx,
+		(state.cherry.x1 + 0.5) * cellW,
+		(state.cherry.y1 + 0.5) * cellH,
+		Math.min(cellW / 2, cellH / 2)
+	);
 
 }
 function handleEvent(event) {
-	currentState = gameOverCheck(cherryPick(reduceState(currentState, event)));
+	currentState = gameOverCheck(snakeTeleport(reduceState(cherryPick(currentState), event)));
 	paintState(ctx, currentState);
 }
 
@@ -234,4 +257,4 @@ document.addEventListener("keydown", (event) =>
 	handleEvent(eventFromKeyCodes[event.key])
 );
 
-paintState(ctx, currentState);
+
