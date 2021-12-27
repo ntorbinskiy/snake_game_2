@@ -1,24 +1,24 @@
-let currentState = {
-	gridWidth: 10,
-	gridHeight: 10,
-	direction: undefined,
-	snakeBody: [
-		{ x: 8, y: 5 },
-		{ x: 7, y: 5 }
-	],
-	gameOver: false,
-	cherry: { x1: 5, y1: 5 },
-	teleportSnake: false
-};
+export function createState() {
+	return {
+		gridWidth: 10,
+		gridHeight: 10,
+		direction: undefined,
+		snakeBody: [
+			{ x: 8, y: 5 },
+			{ x: 7, y: 5 }
+		],
+		gameOver: false,
+		cherry: { x1: 5, y1: 5 },
+		teleportSnake: false
+	};
+}
+
 
 export const UP = "UP";
 export const DOWN = "DOWN";
 export const LEFT = "LEFT";
 export const RIGHT = "RIGHT";
 export const TIMER_TICK = "TIMER_TICK";
-
-
-
 
 function calcHeadPos(direction, x, y) {
 	if (direction === UP) {
@@ -141,13 +141,7 @@ function cherryPick(state) {
 
 	return state;
 }
-function copyState(state) {
-	const newState = state;
-	return newState;
-}
 
-
-export function updateState(event, callback) {
-	currentState = gameOverCheck(snakeTeleport(reduceState(cherryPick(currentState), event)));
-	callback(currentState);
+export function updateState(state, event) {
+	return gameOverCheck(snakeTeleport(reduceState(cherryPick(state), event)));
 }
