@@ -5,7 +5,8 @@ export function createState() {
 		direction: undefined,
 		snakeBody: [
 			{ x: 8, y: 5 },
-			{ x: 7, y: 5 }
+			{ x: 7, y: 5 },
+			{ x: 6, y: 5 }
 		],
 		gameOver: false,
 		cherry: { x1: 5, y1: 5 },
