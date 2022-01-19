@@ -7,6 +7,7 @@
   display: grid;
   align-content: center;
   justify-content: center;
+  background-color: rgb(17, 98, 144);
 }
 
 .field {
@@ -16,6 +17,7 @@
   display: grid;
   align-content: stretch;
   justify-content: stretch;
+  background-color: rgb(143, 122, 3);
 }
 
 .cell {
